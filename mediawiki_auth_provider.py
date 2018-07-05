@@ -74,9 +74,9 @@ class MediawikiOAuthProvider:
             localpart = user_id
             user_id = UserID(localpart, self.account_handler.hs.hostname
                              ).to_string()
-        if localpart != identity["username"]:
+        if localpart.title() != identity["username"]:
             logger.error(("username from mediawiki differs from provided %s !="
-                          "%s"), localpart, identity["username"])
+                          " %s"), localpart, identity["username"])
             yield defer.returnValue(None)
         logger.info("User %s authenticated", user_id)
         if not (yield self.account_handler.check_user_exists(user_id)):
