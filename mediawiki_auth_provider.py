@@ -13,6 +13,7 @@ class MediawikiOAuthProvider:
         self.config = config
         self.auth_handler = self.account_handler._auth_handler
 
+    @staticmethod
     def parse_config(config):
         # verify config sanity
         required = ["consumer_key", "consumer_secret"]
