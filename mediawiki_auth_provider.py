@@ -34,6 +34,7 @@ class MediawikiOAuthProvider:
         mw_config.consumer_key = config["consumer_key"]
         mw_config.consumer_secret = config["consumer_secret"]
         mw_config.domain = ":matrix.wmflabs.org"   # Hardcoded for now
+        return mw_config
 
     @staticmethod
     def get_supported_login_types():
