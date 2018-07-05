@@ -35,6 +35,7 @@ class MediawikiOAuthProvider:
         mw_config.consumer_secret = config["consumer_secret"]
         mw_config.domain = ":matrix.wmflabs.org"   # Hardcoded for now
 
+    @staticmethod
     def get_supported_login_types():
 
         return {"org.wikimedia.oauth_v1": ("request_key", "request_secret",
