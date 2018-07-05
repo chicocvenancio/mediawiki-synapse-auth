@@ -2,6 +2,8 @@ from twisted.internet import defer
 import mwoauth
 import logging
 
+from synapse.types import UserID
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,6 @@ class MediawikiOAuthProvider:
         mw_config = _MWConfig()
         mw_config.consumer_key = config["consumer_key"]
         mw_config.consumer_secret = config["consumer_secret"]
-        mw_config.domain = ":matrix.wmflabs.org"   # Hardcoded for now
         return mw_config
 
     @staticmethod
@@ -67,7 +68,16 @@ class MediawikiOAuthProvider:
             logger.exception('OAuth authentication failed, %s', e)
             yield defer.returnValue(None)
 
-        localpart = user_id.split(":", 1)[0][1:]
+        if user_id.startswith("@"):
+            localpart = user_id.split(":", 1)[0][1:]
+        else:
+            localpart = user_id
+            user_id = UserID(localpart, self.account_handler.hs.hostname
+                             ).to_string()
+        if localpart != identity["username"]:
+            logger.error(("username from mediawiki differs from provided %s !="
+                          "%s"), localpart, identity["username"])
+            yield defer.returnValue(None)
         logger.info("User %s authenticated", user_id)
         if not (yield self.account_handler.check_user_exists(user_id)):
             logger.info("User %s does not exist yet, creating...", user_id)
@@ -80,5 +90,4 @@ class MediawikiOAuthProvider:
             logger.info("User %s already exists, registration skipped",
                         user_id)
 
-        yield defer.returnValue((identity["username"] + self.config.domain,
-                                None))
+        yield defer.returnValue((user_id, None))
