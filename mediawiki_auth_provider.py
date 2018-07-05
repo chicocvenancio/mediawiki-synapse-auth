@@ -43,13 +43,14 @@ class MediawikiOAuthProvider:
                                            "oauth_query")}
 
     @defer.inlineCallbacks
-    def check_auth(self, username, login_type, login_dict):
+    def check_auth(self, user_id, login_type, login_dict):
         """Authenticate user with mediawiki
 
         This will receive OAuth comsumer and request tokens and identify
         the user. Initiating and handling the OAuth callback will be done
         in the clients"""
 
+        logger.info("Request to auth user %s", user_id)
         consumer_token = mwoauth.ConsumerToken(
             self.config.consumer_key, self.config.consumer_secret)
 
@@ -62,8 +63,22 @@ class MediawikiOAuthProvider:
 
             identity = yield mwoauth.identify(
                 self.config.oauth_mwuri, consumer_token, access_token)
-        except Exception:
-            logger.exception('OAuth authentication failed')
-            defer.returnValue(None)
+        except Exception as e:
+            logger.exception('OAuth authentication failed, %s', e)
+            yield defer.returnValue(None)
 
-        defer.returnValue(identity["username"] + self.config.domain)
+        localpart = user_id.split(":", 1)[0][1:]
+        logger.info("User %s authenticated", user_id)
+        if not (yield self.account_handler.check_user_exists(user_id)):
+            logger.info("User %s does not exist yet, creating...", user_id)
+            user_id, access_token = (yield self.account_handler.register(
+                                     localpart=localpart))
+            #  registration = True
+            logger.info("Registration based on MW_OAuth was successful for %s",
+                        user_id)
+        else:
+            logger.info("User %s already exists, registration skipped",
+                        user_id)
+
+        yield defer.returnValue((identity["username"] + self.config.domain,
+                                None))
