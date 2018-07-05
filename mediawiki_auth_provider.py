@@ -60,7 +60,7 @@ class MediawikiOAuthProvider:
                                      login_dict['request_secret']),
                 login_dict['oauth_query'])
 
-            identity = mwoauth.identify(
+            identity = yield mwoauth.identify(
                 self.config.oauth_mwuri, consumer_token, access_token)
         except Exception:
             logger.exception('OAuth authentication failed')
